@@ -6,7 +6,7 @@ use actix_web::{
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
 
-use crate::crypto_client::CryptoClient;
+use crate::crypto_client::{CryptoClient, ParsedDataHistory};
 
 pub async fn simple_moving_average(
     form: web::Form<FormData>,
@@ -18,16 +18,12 @@ pub async fn simple_moving_average(
         return Ok(HttpResponse::BadRequest().finish());
     }
 
-    let response = crypto_client
-        .get_history_prices(&uuid, &form.time)
-        .await?
-        .json::<HistoryResponseData>()
-        .await?;
+    let response = crypto_client.get_history_prices(&uuid, &form.time).await?;
 
     let mut sum = 0.0;
     let mut n = 0.0;
-    for entry in response.data.history {
-        sum += entry.price.parse::<f64>().unwrap();
+    for entry in response.history {
+        sum += entry.price;
         n += 1.0;
     }
 
@@ -37,27 +33,6 @@ pub async fn simple_moving_average(
         status: "success".to_owned(),
         data: SimpleMovingAverageData(sma),
     }))
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct HistoryResponseData {
-    pub status: String,
-    pub data: Data,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Data {
-    pub change: String,
-    pub history: Vec<History>,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct History {
-    pub price: String,
-    pub timestamp: i64,
 }
 
 #[derive(serde::Deserialize)]

@@ -24,7 +24,7 @@ impl CryptoClient {
         &self,
         coin_uuid: &str,
         time: &str,
-    ) -> Result<Response, Box<dyn std::error::Error>> {
+    ) -> Result<ParsedDataHistory, Box<dyn std::error::Error>> {
         let url = format!(
             "{}/coin/{}/history?timePeriod={}",
             self.base_url, coin_uuid, time
@@ -38,13 +38,25 @@ impl CryptoClient {
             .await?
             .error_for_status()?;
 
-        Ok(response)
+        let parsed_response = response.json::<HistoryResponseData>().await?;
+
+        let parsed_history: Vec<ParsedHistory> = parsed_response
+            .data
+            .history
+            .iter()
+            .map(|history| ParsedHistory {
+                price: history.price.parse::<f64>().unwrap(),
+                timestamp: history.timestamp,
+            })
+            .collect();
+
+        let parsed_data = ParsedDataHistory {
+            history: parsed_history,
+        };
+        Ok(parsed_data)
     }
 
-    pub async fn get_coin_uuid(
-        &self,
-        coin_symbol: &str,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn get_coin_uuid(&self, coin_symbol: &str) -> Result<String, reqwest::Error> {
         let url = format!("{}/search-suggestions?query={}", self.base_url, coin_symbol);
 
         let response = self
@@ -63,13 +75,10 @@ impl CryptoClient {
             }
         }
 
-        Ok("Bad request".to_owned())
+        Ok("coin not found".to_owned())
     }
 
-    pub async fn get_coin_ohlc(
-        &self,
-        coin_symbol: &str,
-    ) -> Result<Response, Box<dyn std::error::Error>> {
+    pub async fn get_coin_ohlc(&self, coin_symbol: &str) -> Result<ParsedOhlcData, reqwest::Error> {
         let url = format!("{}/coin/{}/ohlc", self.base_url, coin_symbol);
 
         let response = self
@@ -80,7 +89,28 @@ impl CryptoClient {
             .await?
             .error_for_status()?;
 
-        Ok(response)
+        let response_json = response.json::<OhlcResponseData>().await?;
+        //todo: CHECK STATUS
+
+        let parsed_ohlc: Vec<ParsedOhlc> = response_json
+            .data
+            .ohlc
+            .iter()
+            .take(30)
+            .map(|ohlc| ParsedOhlc {
+                starting_at: ohlc.starting_at,
+                ending_at: ohlc.ending_at,
+                open: ohlc.open.parse::<f64>().unwrap(),
+                high: ohlc.high.parse::<f64>().unwrap(),
+                low: ohlc.low.parse::<f64>().unwrap(),
+                close: ohlc.close.parse::<f64>().unwrap(),
+                avg: ohlc.avg.parse::<f64>().unwrap(),
+            })
+            .collect();
+
+        let parsed_data = ParsedOhlcData { ohlc: parsed_ohlc };
+
+        Ok(parsed_data)
     }
 }
 
@@ -89,12 +119,12 @@ impl CryptoClient {
 #[serde(rename_all = "camelCase")]
 pub struct Body {
     pub status: String,
-    pub data: Data,
+    pub data: DataUuid,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Data {
+pub struct DataUuid {
     pub coins: Vec<Coin>,
 }
 
@@ -108,4 +138,83 @@ pub struct Coin {
     pub price: String,
 }
 
-/************************************************************/
+/*************************** historyResponseData ******************************/
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HistoryResponseData {
+    pub status: String,
+    pub data: DataHistory,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DataHistory {
+    pub change: String,
+    pub history: Vec<History>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct History {
+    pub price: String,
+    pub timestamp: i64,
+}
+/********* PARSED DATA ******/
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ParsedDataHistory {
+    //pub change: String,
+    pub history: Vec<ParsedHistory>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ParsedHistory {
+    pub price: f64,
+    pub timestamp: i64,
+}
+
+/******************** ohlc RESPONSE DATA *****************/
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OhlcResponseData {
+    pub status: String,
+    pub data: Data,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Data {
+    pub ohlc: Vec<Ohlc>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Ohlc {
+    pub starting_at: i64,
+    pub ending_at: i64,
+    pub open: String,
+    pub high: String,
+    pub low: String,
+    pub close: String,
+    pub avg: String,
+}
+/********* PARSED DATA ******/
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ParsedOhlcData {
+    pub ohlc: Vec<ParsedOhlc>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ParsedOhlc {
+    pub starting_at: i64,
+    pub ending_at: i64,
+    pub open: f64,
+    pub high: f64,
+    pub low: f64,
+    pub close: f64,
+    pub avg: f64,
+}

@@ -2,8 +2,6 @@ use actix_web::{web, HttpResponse};
 
 use crate::crypto_client::CryptoClient;
 
-use super::OhlcResponseData;
-
 #[derive(serde::Deserialize)]
 pub struct FormData {
     coin: String,
@@ -19,18 +17,14 @@ pub async fn stochastic_oscillator(
         return Ok(HttpResponse::BadRequest().finish());
     }
 
-    let response = crypto_client
-        .get_coin_ohlc(&uuid)
-        .await?
-        .json::<OhlcResponseData>()
-        .await?;
+    let response = crypto_client.get_coin_ohlc(&uuid).await?;
 
     let mut i: i8 = 0;
     let mut highest_high: f64 = 0.0;
     let mut lowest_low: f64 = f64::INFINITY;
-    for ohlc in response.data.ohlc.iter() {
-        let high = ohlc.high.parse::<f64>().unwrap();
-        let low = ohlc.low.parse::<f64>().unwrap();
+    for ohlc in response.ohlc.iter() {
+        let high = ohlc.high;
+        let low = ohlc.low;
         if highest_high < high {
             highest_high = high;
         }
@@ -45,16 +39,7 @@ pub async fn stochastic_oscillator(
         }
     }
 
-    let numerator = response
-        .data
-        .ohlc
-        .into_iter()
-        .nth(0)
-        .unwrap()
-        .close
-        .parse::<f64>()
-        .unwrap()
-        - lowest_low;
+    let numerator = (response.ohlc.into_iter().nth(0).unwrap().close) - lowest_low;
 
     let denominator = highest_high - lowest_low;
 

@@ -2,8 +2,6 @@ use actix_web::{web, HttpResponse};
 
 use crate::crypto_client::CryptoClient;
 
-use super::{Ohlc, OhlcResponseData};
-
 #[derive(serde::Deserialize)]
 pub struct FormData {
     coin: String,
@@ -19,20 +17,11 @@ pub async fn exponential_moving_average(
         return Ok(HttpResponse::BadRequest().finish());
     }
 
-    let response = crypto_client
-        .get_coin_ohlc(&uuid)
-        .await?
-        .json::<OhlcResponseData>()
-        .await?;
+    let response = crypto_client.get_coin_ohlc(&uuid).await?;
 
-    let ema = response
-        .data
-        .ohlc
-        .iter()
-        .take(20)
-        .fold(0., |acc: f64, x: &Ohlc| {
-            x.close.parse::<f64>().unwrap() * (2. / (1. + 20.)) + acc * (1. - (2. / (1. + 20.)))
-        });
+    let ema = response.ohlc.iter().take(20).fold(0., |acc: f64, x| {
+        x.close * (2. / (1. + 20.)) + acc * (1. - (2. / (1. + 20.)))
+    });
 
     Ok(HttpResponse::Ok().json(Success {
         status: "success".to_owned(),

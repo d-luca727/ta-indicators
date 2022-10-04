@@ -2,8 +2,6 @@ use actix_web::{web, HttpResponse};
 
 use crate::crypto_client::CryptoClient;
 
-use super::OhlcResponseData;
-
 #[derive(serde::Deserialize)]
 pub struct FormData {
     coin: String,
@@ -19,19 +17,15 @@ pub async fn rsi(
         return Ok(HttpResponse::BadRequest().finish());
     }
 
-    let response = crypto_client
-        .get_coin_ohlc(&uuid)
-        .await?
-        .json::<OhlcResponseData>()
-        .await?;
+    let response = crypto_client.get_coin_ohlc(&uuid).await?;
 
     let mut i: i8 = 0;
     let mut prev_close: f64 = 0.0;
     let mut sum_of_gains = 0.0;
     let mut sum_of_losses = 0.0;
-    for ohlc in response.data.ohlc.iter() {
+    for ohlc in response.ohlc.iter() {
         if i != 0 {
-            let x = prev_close - ohlc.close.parse::<f64>().unwrap();
+            let x = prev_close - ohlc.close;
             match x {
                 res if res > 0.0 => sum_of_gains += x,
                 res if res < 0.0 => sum_of_losses += x.abs(),
@@ -40,7 +34,7 @@ pub async fn rsi(
         }
 
         i += 1;
-        prev_close = ohlc.close.parse::<f64>().unwrap();
+        prev_close = ohlc.close;
         if i == 14 {
             break;
         }
