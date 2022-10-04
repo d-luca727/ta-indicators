@@ -3,22 +3,22 @@ use actix_web::{
     HttpResponse,
 };
 
-use serde_derive::Deserialize;
-use serde_derive::Serialize;
-
-use crate::crypto_client::{CryptoClient, ParsedDataHistory};
+use crate::crypto_client::{CoinUuidErr::*, CryptoClient};
 
 pub async fn simple_moving_average(
     form: web::Form<FormData>,
     crypto_client: web::Data<CryptoClient>,
-) -> Result<HttpResponse, Box<dyn std::error::Error>> {
-    let uuid = crypto_client.get_coin_uuid(&form.coin).await?;
+) -> HttpResponse {
+    let uuid = match crypto_client.get_coin_uuid(&form.coin).await {
+        Ok(uuid) => uuid,
+        Err(CoinNotFound) => return HttpResponse::BadRequest().finish(),
+        Err(_) => return HttpResponse::InternalServerError().finish(),
+    };
 
-    if uuid.as_str().eq("Bad request") {
-        return Ok(HttpResponse::BadRequest().finish());
-    }
-
-    let response = crypto_client.get_history_prices(&uuid, &form.time).await?;
+    let response = match crypto_client.get_history_prices(&uuid, &form.time).await {
+        Ok(response) => response,
+        Err(_) => return HttpResponse::InternalServerError().finish(),
+    };
 
     let mut sum = 0.0;
     let mut n = 0.0;
@@ -29,10 +29,10 @@ pub async fn simple_moving_average(
 
     let sma = sum / n;
 
-    Ok(HttpResponse::Ok().json(Success {
+    HttpResponse::Ok().json(Success {
         status: "success".to_owned(),
         data: SimpleMovingAverageData(sma),
-    }))
+    })
 }
 
 #[derive(serde::Deserialize)]

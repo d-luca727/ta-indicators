@@ -1,6 +1,7 @@
 use actix_web::web;
 use actix_web::HttpResponse;
 
+use crate::crypto_client::CoinUuidErr::*;
 use crate::crypto_client::CryptoClient;
 
 #[derive(serde::Deserialize)]
@@ -12,15 +13,17 @@ pub struct FormData {
 pub async fn fibonacci_retracement(
     form: web::Form<FormData>,
     crypto_client: web::Data<CryptoClient>,
-) -> Result<HttpResponse, Box<dyn std::error::Error>> {
-    let uuid = crypto_client.get_coin_uuid(&form.coin).await?;
+) -> HttpResponse {
+    let uuid = match crypto_client.get_coin_uuid(&form.coin).await {
+        Ok(uuid) => uuid,
+        Err(CoinNotFound) => return HttpResponse::BadRequest().finish(),
+        Err(_) => return HttpResponse::InternalServerError().finish(),
+    };
 
-    if uuid.as_str().eq("Bad request") {
-        return Ok(HttpResponse::BadRequest().finish());
-    }
-
-    let response = crypto_client.get_coin_ohlc(&uuid).await?;
-
+    let response = match crypto_client.get_coin_ohlc(&uuid).await {
+        Ok(response) => response,
+        Err(_) => return HttpResponse::InternalServerError().finish(),
+    };
     //TODO remove unwrap
     let ohlc = response.ohlc.into_iter().nth(0).unwrap();
 
@@ -38,10 +41,10 @@ pub async fn fibonacci_retracement(
             "U" | "UPTREND" => high - second_part,
             "D" | "DOWNTREND" => low + second_part,
             &_ => {
-                return Ok(HttpResponse::Ok().json(Success {
+                return HttpResponse::Ok().json(Success {
                     status: "400 | Bad Request, try inserting the correct market data".to_owned(),
                     data: vec,
-                }))
+                })
             }
         };
 
@@ -51,23 +54,26 @@ pub async fn fibonacci_retracement(
         });
     }
 
-    Ok(HttpResponse::Ok().json(Success {
+    HttpResponse::Ok().json(Success {
         status: "success".to_owned(),
         data: vec,
-    }))
+    })
 }
 
 pub async fn fibonacci_extension(
     form: web::Form<FormData>,
     crypto_client: web::Data<CryptoClient>,
-) -> Result<HttpResponse, Box<dyn std::error::Error>> {
-    let uuid = crypto_client.get_coin_uuid(&form.coin).await?;
+) -> HttpResponse {
+    let uuid = match crypto_client.get_coin_uuid(&form.coin).await {
+        Ok(uuid) => uuid,
+        Err(CoinNotFound) => return HttpResponse::BadRequest().finish(),
+        Err(_) => return HttpResponse::InternalServerError().finish(),
+    };
 
-    if uuid.as_str().eq("Bad request") {
-        return Ok(HttpResponse::BadRequest().finish());
-    }
-
-    let response = crypto_client.get_coin_ohlc(&uuid).await?;
+    let response = match crypto_client.get_coin_ohlc(&uuid).await {
+        Ok(response) => response,
+        Err(_) => return HttpResponse::InternalServerError().finish(),
+    };
 
     //TODO remove unwrap
     let ohlc = response.ohlc.into_iter().nth(0).unwrap();
@@ -86,11 +92,11 @@ pub async fn fibonacci_extension(
             "U" | "UPTREND" => high + second_part,
             "D" | "DOWNTREND" => low - second_part,
             &_ => {
-                return Ok(HttpResponse::Ok().json(Success {
+                return HttpResponse::Ok().json(Success {
                     status: "400 | Bad Request, try inserting the correct market trend data"
                         .to_owned(),
                     data: vec,
-                }))
+                })
             }
         };
 
@@ -100,10 +106,10 @@ pub async fn fibonacci_extension(
         });
     }
 
-    Ok(HttpResponse::Ok().json(Success {
+    HttpResponse::Ok().json(Success {
         status: "success".to_owned(),
         data: vec,
-    }))
+    })
 }
 
 //success Response

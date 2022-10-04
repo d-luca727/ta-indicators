@@ -1,6 +1,6 @@
 use actix_web::{web, HttpResponse};
 
-use crate::crypto_client::CryptoClient;
+use crate::crypto_client::{CoinUuidErr::*, CryptoClient};
 
 #[derive(serde::Deserialize)]
 pub struct FormData {
@@ -10,14 +10,17 @@ pub struct FormData {
 pub async fn rsi(
     form: web::Form<FormData>,
     crypto_client: web::Data<CryptoClient>,
-) -> Result<HttpResponse, Box<dyn std::error::Error>> {
-    let uuid = crypto_client.get_coin_uuid(&form.coin).await?;
+) -> HttpResponse {
+    let uuid = match crypto_client.get_coin_uuid(&form.coin).await {
+        Ok(uuid) => uuid,
+        Err(CoinNotFound) => return HttpResponse::BadRequest().finish(),
+        Err(_) => return HttpResponse::InternalServerError().finish(),
+    };
 
-    if uuid.as_str().eq("Bad request") {
-        return Ok(HttpResponse::BadRequest().finish());
-    }
-
-    let response = crypto_client.get_coin_ohlc(&uuid).await?;
+    let response = match crypto_client.get_coin_ohlc(&uuid).await {
+        Ok(response) => response,
+        Err(_) => return HttpResponse::InternalServerError().finish(),
+    };
 
     let mut i: i8 = 0;
     let mut prev_close: f64 = 0.0;
@@ -48,10 +51,10 @@ pub async fn rsi(
     let second_part = 100.0 / (1.0 + rs);
     let rsi = 100.0 - second_part;
 
-    Ok(HttpResponse::Ok().json(Success {
+    HttpResponse::Ok().json(Success {
         status: "success".to_owned(),
         data: rsi,
-    }))
+    })
 }
 
 #[derive(serde::Serialize)]

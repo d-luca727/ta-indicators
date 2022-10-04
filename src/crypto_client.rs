@@ -1,13 +1,7 @@
-use reqwest::{Client, Response};
+use reqwest::Client;
 use secrecy::{ExposeSecret, Secret};
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
-
-pub struct CryptoClient {
-    http_client: Client,
-    base_url: String,
-    authorization_token: Secret<String>,
-}
 
 impl CryptoClient {
     pub fn new(base_url: String, authorization_token: Secret<String>) -> Self {
@@ -24,7 +18,7 @@ impl CryptoClient {
         &self,
         coin_uuid: &str,
         time: &str,
-    ) -> Result<ParsedDataHistory, Box<dyn std::error::Error>> {
+    ) -> Result<ParsedDataHistory, reqwest::Error> {
         let url = format!(
             "{}/coin/{}/history?timePeriod={}",
             self.base_url, coin_uuid, time
@@ -56,7 +50,7 @@ impl CryptoClient {
         Ok(parsed_data)
     }
 
-    pub async fn get_coin_uuid(&self, coin_symbol: &str) -> Result<String, reqwest::Error> {
+    pub async fn get_coin_uuid(&self, coin_symbol: &str) -> Result<String, CoinUuidErr> {
         let url = format!("{}/search-suggestions?query={}", self.base_url, coin_symbol);
 
         let response = self
@@ -75,7 +69,7 @@ impl CryptoClient {
             }
         }
 
-        Ok("coin not found".to_owned())
+        Err(CoinUuidErr::CoinNotFound)
     }
 
     pub async fn get_coin_ohlc(&self, coin_symbol: &str) -> Result<ParsedOhlcData, reqwest::Error> {
@@ -90,7 +84,6 @@ impl CryptoClient {
             .error_for_status()?;
 
         let response_json = response.json::<OhlcResponseData>().await?;
-        //todo: CHECK STATUS
 
         let parsed_ohlc: Vec<ParsedOhlc> = response_json
             .data
@@ -114,7 +107,31 @@ impl CryptoClient {
     }
 }
 
-/*************** body parsing for get_coin_uuid ****************/
+/*** Err enums ****/
+
+#[derive(Debug)]
+pub enum CoinUuidErr {
+    CoinNotFound,
+    RequestError(reqwest::Error),
+}
+
+impl From<reqwest::Error> for CoinUuidErr {
+    fn from(err: reqwest::Error) -> Self {
+        CoinUuidErr::RequestError(err)
+    }
+}
+
+pub struct CryptoClient {
+    http_client: Client,
+    base_url: String,
+    authorization_token: Secret<String>,
+}
+
+///this struct is necessary for serde because the values in the
+///request's fields are embedded in strings rather than being bare
+///floats, so it is done in a manual step immediately after parsing the request
+
+/*************** coinUuidResponseData ****************/
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Body {
