@@ -22,9 +22,7 @@
   "paths": {
     "/health_check": {
       "get": {
-        "tags": [
-          "health_check"
-        ],
+        "tags": ["health_check"],
         "responses": {
           "200": {
             "description": "Successful operation"
@@ -34,9 +32,7 @@
     },
     "/simple_moving_average/{coin}/{time}": {
       "get": {
-        "tags": [
-          "indicators"
-        ],
+        "tags": ["indicators"],
         "parameters": [
           {
             "in": "path",
@@ -57,6 +53,7 @@
             "description": "time period; accepted values = [`1h` `3h` `12h` `24h` `7d` `30d` `3m` `1y` `3y` `5y`]"
           }
         ],
+        "summary": "Simple Moving Average",
         "description": "A simple moving average (SMA) is an arithmetic moving average calculated by adding recent prices and then dividing that figure by the number of time periods in the calculation average.",
         "responses": {
           "200": {
@@ -86,9 +83,7 @@
     },
     "/fibonacci_retracement/{coin}/{trend}": {
       "get": {
-        "tags": [
-          "indicators"
-        ],
+        "tags": ["indicators"],
         "parameters": [
           {
             "in": "path",
@@ -109,6 +104,7 @@
             "description": "accepted values for `market` = [ `U` or `UPTREND` | `D` or `DOWNTREND` ]"
           }
         ],
+        "summary": "Fibonacci Retracement",
         "description": "Fibonacci retracement levels—stemming from the Fibonacci sequence—are horizontal lines that indicate where support and resistance are likely to occur. Each level is associated with a percentage. The percentage is how much of a prior move the price has retraced.",
         "responses": {
           "200": {
@@ -151,9 +147,7 @@
     },
     "/fibonacci_extension/{coin}/{trend}": {
       "get": {
-        "tags": [
-          "indicators"
-        ],
+        "tags": ["indicators"],
         "parameters": [
           {
             "in": "path",
@@ -174,6 +168,7 @@
             "description": "accepted values for `market` = [ `U` or `UPTREND` | `D` or `DOWNTREND` ]"
           }
         ],
+        "summary": "Fibonacci Extensions",
         "description": "Fibonacci extensions are a tool that traders can use to establish profit targets or estimate how far a price may travel after a pullback is finished",
         "responses": {
           "200": {
@@ -216,9 +211,7 @@
     },
     "/rsi/{coin}": {
       "get": {
-        "tags": [
-          "indicators"
-        ],
+        "tags": ["indicators"],
         "parameters": [
           {
             "in": "path",
@@ -230,7 +223,7 @@
             "description": "Symbol of the coin (e.g. BTC)"
           }
         ],
-        "summary": "14 days period",
+        "summary": "Relative Strength Index",
         "description": "The Relative Strength Index (RSI), developed by J. Welles Wilder, is a momentum oscillator that measures the speed and change of price movements. The RSI oscillates between zero and 100. Traditionally the RSI is considered overbought when above 70 and oversold when below 30.",
         "responses": {
           "200": {
@@ -260,9 +253,7 @@
     },
     "/aroon_oscillator/{coin}": {
       "get": {
-        "tags": [
-          "indicators"
-        ],
+        "tags": ["indicators"],
         "parameters": [
           {
             "in": "path",
@@ -274,7 +265,7 @@
             "description": "Symbol of the coin (e.g. BTC)"
           }
         ],
-        "summary": "25 days period",
+        "summary": "Aroon Oscillator",
         "description": "The Aroon Oscillator is a trend-following indicator that uses aspects of the Aroon Indicator (Aroon Up and Aroon Down) to gauge the strength of a current trend and the likelihood that it will continue.",
         "responses": {
           "200": {
@@ -304,9 +295,7 @@
     },
     "/stochastic_oscillator/{coin}": {
       "get": {
-        "tags": [
-          "indicators"
-        ],
+        "tags": ["indicators"],
         "parameters": [
           {
             "in": "path",
@@ -318,7 +307,7 @@
             "description": "Symbol of the coin (e.g. BTC)"
           }
         ],
-        "summary": "14 days period",
+        "summary": "Stochastic Oscillator",
         "description": "A stochastic oscillator is a momentum indicator comparing a particular closing price of a security to a range of its prices over a certain period of time. The sensitivity of the oscillator to market movements is reducible by adjusting that time period or by taking a moving average of the result.",
         "responses": {
           "200": {
@@ -348,9 +337,7 @@
     },
     "/exponential_moving_average/{coin}": {
       "get": {
-        "tags": [
-          "indicators"
-        ],
+        "tags": ["indicators"],
         "parameters": [
           {
             "in": "path",
@@ -362,7 +349,7 @@
             "description": "Symbol of the coin (e.g. BTC)"
           }
         ],
-        "summary": "20 days period",
+        "summary": "Exponential Moving Average",
         "description": "An exponential moving average (EMA) is a type of moving average (MA) that places a greater weight and significance on the most recent data points",
         "responses": {
           "200": {
