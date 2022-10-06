@@ -8,8 +8,8 @@ use crate::routes::{
 use actix_files::NamedFile;
 use actix_web::dev::Server;
 use actix_web::web::Data;
-use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer};
-use serde_json::json;
+use actix_web::{web, App, HttpRequest, HttpServer};
+
 use std::net::TcpListener;
 use std::path::PathBuf;
 
