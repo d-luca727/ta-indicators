@@ -24,5 +24,4 @@ inside `local.yaml`
 application:
   host: 127.0.0.1
 ```
-4. cargo run
-
+4. `cargo run`
