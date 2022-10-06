@@ -4,13 +4,13 @@ With a strong focus on analyzing the crypto market, this service offers a no-fri
 
 # How to run it
 
-1. `git clone https://github.com/Proioxis4/ta-indicators/`
-2. add 
+
+1. add 
 ```
 configuration/base.yaml
 configuration/local.yaml
 ```
-3. inside `base.yaml`
+2. inside `base.yaml`
 ```
 application:
   port: 8000
@@ -24,4 +24,4 @@ inside `local.yaml`
 application:
   host: 127.0.0.1
 ```
-4. `cargo run`
+3. `cargo run`
