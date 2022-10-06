@@ -1,1 +1,4 @@
-/target
+target/
+Dockerfile
+spec.yaml
+configuration/
