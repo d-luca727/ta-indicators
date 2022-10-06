@@ -54,11 +54,15 @@ pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
 }
 
 async fn docs(_req: HttpRequest) -> Result<NamedFile, std::io::Error> {
-    let path: PathBuf = "./static/index.html".parse().unwrap();
-    Ok(NamedFile::open(path)?)
+    let base_path = std::env::current_dir().expect("Failed to determine the current directory");
+    let html_path = base_path.join("configuration/static/index.html");
+    //let path: PathBuf = "./configuration/static/index.html".parse().unwrap();
+    Ok(NamedFile::open(html_path)?)
 }
 
 async fn json_get(_req: HttpRequest) -> Result<NamedFile, std::io::Error> {
-    let path: PathBuf = "./static/openapi.json".parse().unwrap();
-    Ok(NamedFile::open(path)?)
+    let base_path = std::env::current_dir().expect("Failed to determine the current directory");
+    let json_path = base_path.join("configuration/static/openapi.json");
+    //let path: PathBuf = "./configuration/static/openapi.json".parse().unwrap();
+    Ok(NamedFile::open(json_path)?)
 }
