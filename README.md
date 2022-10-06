@@ -1,6 +1,6 @@
 ﻿# ta-indicators
  
-With a strong focus on analyzing the crypto market, this service offers a no-frills, quick and handy interface to calculate the most useful TA indicators. It is still at an early stage of development, nonetheless the most used indicators have been already implemented. My future vision will be to integrate this API into another crypto related project (\href{https://github.com/Proioxis4/pogeverse}{PogeVerse}).
+With a strong focus on analyzing the crypto market, this service offers a no-frills, quick and handy interface to calculate the most useful TA indicators. It is still at an early stage of development, nonetheless the most used indicators have been already implemented.
 
 # How to run it
 
