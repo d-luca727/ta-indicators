@@ -3,15 +3,15 @@ use actix_web::{web, HttpResponse};
 use crate::crypto_client::{CoinUuidErr::*, CryptoClient};
 
 #[derive(serde::Deserialize)]
-pub struct FormData {
+pub struct PathData {
     coin: String,
 }
 
 pub async fn stochastic_oscillator(
-    form: web::Form<FormData>,
+    path: web::Path<PathData>,
     crypto_client: web::Data<CryptoClient>,
 ) -> HttpResponse {
-    let uuid = match crypto_client.get_coin_uuid(&form.coin).await {
+    let uuid = match crypto_client.get_coin_uuid(&path.coin).await {
         Ok(uuid) => uuid,
         Err(CoinNotFound) => return HttpResponse::BadRequest().finish(),
         Err(_) => return HttpResponse::InternalServerError().finish(),

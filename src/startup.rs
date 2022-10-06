@@ -20,22 +20,25 @@ pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
         App::new()
             .route("/health_check", web::get().to(health_check))
             .route(
-                "/simple_moving_average",
+                "/simple_moving_average/{coin}/{time}",
                 web::get().to(simple_moving_average),
             )
             .route(
-                "/fibonacci_retracement",
+                "/fibonacci_retracement/{coin}/{market}",
                 web::get().to(fibonacci_retracement),
             )
-            .route("/fibonacci_extension", web::get().to(fibonacci_extension))
-            .route("/rsi", web::get().to(rsi))
-            .route("/aroon_oscillator", web::get().to(aroon_oscillator))
             .route(
-                "/stochastic_oscillator",
+                "/fibonacci_extension/{coin}/{market}",
+                web::get().to(fibonacci_extension),
+            )
+            .route("/rsi/{coin}", web::get().to(rsi))
+            .route("/aroon_oscillator/{coin}", web::get().to(aroon_oscillator))
+            .route(
+                "/stochastic_oscillator/{coin}",
                 web::get().to(stochastic_oscillator),
             )
             .route(
-                "/exponential_moving_average",
+                "/exponential_moving_average/{coin}",
                 web::get().to(exponential_moving_average),
             )
             .app_data(crypto_client.to_owned())

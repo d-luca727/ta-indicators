@@ -5,16 +5,16 @@ use crate::crypto_client::CoinUuidErr::*;
 use crate::crypto_client::CryptoClient;
 
 #[derive(serde::Deserialize)]
-pub struct FormData {
+pub struct PathData {
     coin: String,
     market: String,
 }
 
 pub async fn fibonacci_retracement(
-    form: web::Form<FormData>,
+    path: web::Path<PathData>,
     crypto_client: web::Data<CryptoClient>,
 ) -> HttpResponse {
-    let uuid = match crypto_client.get_coin_uuid(&form.coin).await {
+    let uuid = match crypto_client.get_coin_uuid(&path.coin).await {
         Ok(uuid) => uuid,
         Err(CoinNotFound) => return HttpResponse::BadRequest().finish(),
         Err(_) => return HttpResponse::InternalServerError().finish(),
@@ -37,7 +37,7 @@ pub async fn fibonacci_retracement(
 
     for percentage in percentages {
         let second_part = (high - low) * percentage;
-        let first_part = match form.market.to_ascii_uppercase().as_str() {
+        let first_part = match path.market.to_ascii_uppercase().as_str() {
             "U" | "UPTREND" => high - second_part,
             "D" | "DOWNTREND" => low + second_part,
             &_ => {
@@ -61,10 +61,10 @@ pub async fn fibonacci_retracement(
 }
 
 pub async fn fibonacci_extension(
-    form: web::Form<FormData>,
+    path: web::Path<PathData>,
     crypto_client: web::Data<CryptoClient>,
 ) -> HttpResponse {
-    let uuid = match crypto_client.get_coin_uuid(&form.coin).await {
+    let uuid = match crypto_client.get_coin_uuid(&path.coin).await {
         Ok(uuid) => uuid,
         Err(CoinNotFound) => return HttpResponse::BadRequest().finish(),
         Err(_) => return HttpResponse::InternalServerError().finish(),
@@ -88,7 +88,7 @@ pub async fn fibonacci_extension(
 
     for percentage in percentages {
         let second_part = (high - low) * percentage;
-        let first_part = match form.market.to_ascii_uppercase().as_str() {
+        let first_part = match path.market.to_ascii_uppercase().as_str() {
             "U" | "UPTREND" => high + second_part,
             "D" | "DOWNTREND" => low - second_part,
             &_ => {
