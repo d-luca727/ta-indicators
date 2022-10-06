@@ -5,10 +5,13 @@ use crate::routes::{
     aroon_oscillator, exponential_moving_average, fibonacci_retracement, health_check, rsi,
     simple_moving_average, stochastic_oscillator,
 };
+use actix_files::NamedFile;
 use actix_web::dev::Server;
 use actix_web::web::Data;
-use actix_web::{web, App, HttpServer};
+use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer};
+use serde_json::json;
 use std::net::TcpListener;
+use std::path::PathBuf;
 
 pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
     let configuration = get_configuration().expect("Failed to read configuration.");
@@ -41,9 +44,21 @@ pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
                 "/exponential_moving_average/{coin}",
                 web::get().to(exponential_moving_average),
             )
+            .route("/docs", web::get().to(docs))
+            .route("/json", web::get().to(json_get))
             .app_data(crypto_client.to_owned())
     })
     .listen(listener)?
     .run();
     Ok(server)
+}
+
+async fn docs(_req: HttpRequest) -> Result<NamedFile, std::io::Error> {
+    let path: PathBuf = "./static/index.html".parse().unwrap();
+    Ok(NamedFile::open(path)?)
+}
+
+async fn json_get(_req: HttpRequest) -> Result<NamedFile, std::io::Error> {
+    let path: PathBuf = "./static/openapi.json".parse().unwrap();
+    Ok(NamedFile::open(path)?)
 }
