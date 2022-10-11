@@ -3,6 +3,12 @@ use secrecy::{ExposeSecret, Secret};
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
 
+pub struct CryptoClient {
+    http_client: Client,
+    base_url: String,
+    authorization_token: Secret<String>,
+}
+
 impl CryptoClient {
     pub fn new(base_url: String, authorization_token: Secret<String>) -> Self {
         let http_client = Client::new();
@@ -72,7 +78,8 @@ impl CryptoClient {
         Err(CoinUuidErr::CoinNotFound)
     }
 
-    pub async fn get_coin_ohlc(&self, coin_symbol: &str) -> Result<ParsedOhlcData, reqwest::Error> {
+    pub async fn get_coin_ohlc(&self, coin_symbol: &str) -> Result<ParsedOhlcData, CoinUuidErr> /* reqwest::Error */
+    {
         let url = format!("{}/coin/{}/ohlc", self.base_url, coin_symbol);
 
         let response = self
@@ -85,25 +92,36 @@ impl CryptoClient {
 
         let response_json = response.json::<OhlcResponseData>().await?;
 
-        let parsed_ohlc: Vec<ParsedOhlc> = response_json
+        let parsed_ohlc: Result<Vec<ParsedOhlc>, CoinUuidErr> = response_json
             .data
             .ohlc
             .iter()
             .take(30)
-            .map(|ohlc| ParsedOhlc {
-                starting_at: ohlc.starting_at,
-                ending_at: ohlc.ending_at,
-                open: ohlc.open.parse::<f64>().unwrap(),
-                high: ohlc.high.parse::<f64>().unwrap(),
-                low: ohlc.low.parse::<f64>().unwrap(),
-                close: ohlc.close.parse::<f64>().unwrap(),
-                avg: ohlc.avg.parse::<f64>().unwrap(),
-            })
+            .map(|ohlc| parse_ohlc(&ohlc))
             .collect();
 
-        let parsed_data = ParsedOhlcData { ohlc: parsed_ohlc };
+        let parsed_data = ParsedOhlcData { ohlc: parsed_ohlc? };
 
         Ok(parsed_data)
+    }
+}
+
+fn parse_ohlc(ohlc: &Ohlc) -> Result<ParsedOhlc, CoinUuidErr> {
+    Ok(ParsedOhlc {
+        starting_at: ohlc.starting_at,
+        ending_at: ohlc.ending_at,
+        open: parse_float(&ohlc.open)?,
+        high: parse_float(&ohlc.high)?,
+        low: parse_float(&ohlc.low)?,
+        close: parse_float(&ohlc.close)?,
+        avg: parse_float(&ohlc.avg)?,
+    })
+}
+
+fn parse_float(s: &String) -> Result<f64, reqwest::StatusCode> {
+    match s.parse::<f64>() {
+        Ok(value) => Ok(value),
+        Err(_) => Err(reqwest::StatusCode::INTERNAL_SERVER_ERROR),
     }
 }
 
@@ -113,6 +131,7 @@ impl CryptoClient {
 pub enum CoinUuidErr {
     CoinNotFound,
     RequestError(reqwest::Error),
+    StatusError(reqwest::StatusCode),
 }
 
 impl From<reqwest::Error> for CoinUuidErr {
@@ -121,10 +140,10 @@ impl From<reqwest::Error> for CoinUuidErr {
     }
 }
 
-pub struct CryptoClient {
-    http_client: Client,
-    base_url: String,
-    authorization_token: Secret<String>,
+impl From<reqwest::StatusCode> for CoinUuidErr {
+    fn from(err: reqwest::StatusCode) -> Self {
+        CoinUuidErr::StatusError(err)
+    }
 }
 
 ///this struct is necessary for serde because the values in the
@@ -235,3 +254,14 @@ pub struct ParsedOhlc {
     pub close: f64,
     pub avg: f64,
 }
+
+//you never know
+/* |ohlc| ParsedOhlc {
+    starting_at: ohlc.starting_at,
+    ending_at: ohlc.ending_at,
+    open: ohlc.open.parse::<f64>().unwrap(),
+    high: ohlc.high.parse::<f64>().unwrap(),
+    low: ohlc.low.parse::<f64>().unwrap(),
+    close: ohlc.close.parse::<f64>().unwrap(),
+    avg: ohlc.avg.parse::<f64>().unwrap(),
+} */

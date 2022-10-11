@@ -44,8 +44,8 @@ pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
                 "/exponential_moving_average/{coin}",
                 web::get().to(exponential_moving_average),
             )
-            .route("/docs", web::get().to(docs))
-            .route("/json", web::get().to(json_get))
+            /* .route("/docs", web::get().to(docs))
+            .route("/json", web::get().to(json_get)) */
             .app_data(crypto_client.to_owned())
     })
     .listen(listener)?
@@ -53,16 +53,15 @@ pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
     Ok(server)
 }
 
-async fn docs(_req: HttpRequest) -> Result<NamedFile, std::io::Error> {
+/* async fn docs(_req: HttpRequest) -> Result<NamedFile, std::io::Error> {
     let base_path = std::env::current_dir().expect("Failed to determine the current directory");
     let html_path = base_path.join("configuration/static/index.html");
-    //let path: PathBuf = "./configuration/static/index.html".parse().unwrap();
     Ok(NamedFile::open(html_path)?)
 }
 
 async fn json_get(_req: HttpRequest) -> Result<NamedFile, std::io::Error> {
     let base_path = std::env::current_dir().expect("Failed to determine the current directory");
     let json_path = base_path.join("configuration/static/openapi.json");
-    //let path: PathBuf = "./configuration/static/openapi.json".parse().unwrap();
     Ok(NamedFile::open(json_path)?)
 }
+ */

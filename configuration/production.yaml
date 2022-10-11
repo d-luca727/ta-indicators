@@ -1,5 +1,0 @@
-application:
-  host: 0.0.0.0
-crypto_client:
-  base_url: "https://coinranking1.p.rapidapi.com"
-  auth_token: "c8c6216682msh1bd5b9b0afb26f3p184472jsn9b992005cf25"
