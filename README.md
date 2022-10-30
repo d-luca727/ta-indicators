@@ -28,3 +28,4 @@ application:
   host: 127.0.0.1
 ```
 `cargo run`
+
